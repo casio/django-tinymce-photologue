@@ -1,0 +1,63 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+	<title></title>
+    {% load jquery_tags %}
+    {% include_jquery %}
+    <link href="{{ STATIC_URL }}tiny_mce/plugins/photologue/css/photologue.css" rel="stylesheet" type="text/css" />
+    <script type="text/javascript" src="{{ STATIC_URL }}tiny_mce/tiny_mce_popup.js"></script>
+    <script type="text/javascript" src="{{ STATIC_URL }}tiny_mce/utils/mctabs.js"></script>
+    <script type="text/javascript" src="{{ STATIC_URL }}tiny_mce/utils/form_utils.js"></script>
+    <script type="text/javascript" src="{{ STATIC_URL }}tiny_mce/utils/validate.js"></script>
+    <script type="text/javascript" src="{{ STATIC_URL }}tiny_mce/utils/editable_selects.js"></script>
+	<script type="text/javascript" src="{{ STATIC_URL }}tiny_mce/plugins/photologue/js/photologue.js"></script>
+    <script type="text/javascript">
+    var photologue_api_url = "{% url photologue_api %}";
+    function add_to_list(obj) {
+        html = "<div class='box'>";
+        html += "<div class='img'><img src='"+obj.thumb+"' /><span>"+obj.title+"</span></div>";
+        html += "<div class='sizes'>";
+        for(var s in obj.sizes) {
+            html += "<a class='photo' href='"+obj.sizes[s]+"'>"+s+"</a>";
+        }
+        html += "</div>";
+        html += "</div>";
+        $("#photos").append(html);
+    }
+    $(document).ready(function(){
+        $("a.photo").live('click', function(){
+            var photo = $(this).attr('href');
+            tinyMCEPopup.execCommand("mceInsertContent", null, "<img src='http://localhost:8000"+photo+"' />")
+            tinyMCEPopup.close();
+        });
+        $.ajax({'url':'{% url photologue_api %}', 'success':function(data){
+            $(data).each(function(idx, d) {
+                add_to_list(d);
+            });
+        }});
+        
+        $("#search").keypress(function(event){
+            if(event.keyCode == 13) {
+                var q = $(event.target).val();
+                $.ajax({'url': photologue_api_url, 'data':{'query': q}, 'success':function(data){
+                    $("#photos").html("");
+                    for(var i in data) {
+                        add_to_list(data[i]);
+                    }
+                }});
+
+                return false;
+            }
+        });
+        $("#search").submit(function(){ return false; });
+    });
+    </script>
+</head>
+<body id="photologue">
+    <h1>fotke</h1>
+    <div id="search-box">
+        <form><input type="text" id="search" /></form>
+    </div>
+    <div id="photos"></div>
+</body>
+</html>
