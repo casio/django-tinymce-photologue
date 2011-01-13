@@ -17,18 +17,22 @@
         html = "<div class='box'>";
         html += "<div class='img'><img src='"+obj.thumb+"' /><span>"+obj.title+"</span></div>";
         html += "<div class='sizes'>";
-        for(var s in obj.sizes) {
-            html += "<a class='photo' href='"+obj.sizes[s]+"'>"+s+"</a>";
-        }
+        {% for t in photo_templates %}
+            html += "<a class='photo' href='{% url tinymce_photologue_template t.id %}?photo_id="+obj.id+"'>{{ t.name }}</a>";
+        {% endfor %}
         html += "</div>";
         html += "</div>";
         $("#photos").append(html);
     }
     $(document).ready(function(){
         $("a.photo").live('click', function(){
-            var photo = $(this).attr('href');
-            tinyMCEPopup.execCommand("mceInsertContent", null, "<img src='http://localhost:8000"+photo+"' />")
-            tinyMCEPopup.close();
+            var tpl_url = $(this).attr('href');
+            $.ajax({'url': tpl_url, 'data':{}, 'success':function(data){
+                tinyMCEPopup.execCommand("mceInsertContent", null, data);
+                tinyMCEPopup.close();
+            }});
+
+            return false;
         });
         $.ajax({'url':'{% url photologue_api %}', 'success':function(data){
             $(data).each(function(idx, d) {
